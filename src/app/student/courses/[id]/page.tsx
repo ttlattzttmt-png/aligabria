@@ -38,11 +38,10 @@ import Link from 'next/link';
 // Video.js Imports
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-// Note: videojs-youtube is imported dynamically in useEffect to avoid SSR issues
 
 /**
- * @fileOverview مشغل النخبة V4.0 - Al-Bashmohandes Elite Engine (Powered by Video.js)
- * الحل العالمي المتكامل للمزامنة والتحكم والأمان.
+ * @fileOverview مشغل النخبة V4.0 Pro - Al-Bashmohandes Elite Engine (Powered by Video.js)
+ * الحل العالمي المتكامل للمزامنة والتحكم والأمان مع دعم الاختفاء التلقائي وتوافق الموبايل.
  */
 
 export default function CourseViewer() {
@@ -99,6 +98,12 @@ export default function CourseViewer() {
     import('videojs-youtube').then(() => {
       if (!videoRef.current) return;
 
+      // التأكد من تنظيف أي مشغل قديم
+      if (playerRef.current) {
+        playerRef.current.dispose();
+      }
+      videoRef.current.innerHTML = '';
+
       // إنشاء عنصر فيديو داخلي
       const videoElement = document.createElement('video-js');
       videoElement.classList.add('vjs-big-play-centered');
@@ -106,7 +111,7 @@ export default function CourseViewer() {
 
       const player = playerRef.current = videojs(videoElement, {
         autoplay: false,
-        controls: false, // سنستخدم واجهة البشمهندس الذهبية
+        controls: false, // سنستخدم واجهتنا الخاصة
         responsive: true,
         fluid: true,
         techOrder: ['youtube'],
@@ -119,11 +124,10 @@ export default function CourseViewer() {
           modestbranding: 1, 
           rel: 0, 
           showinfo: 0,
-          origin: window.location.origin
+          origin: typeof window !== 'undefined' ? window.location.origin : ''
         }
       });
 
-      // متابعة الأحداث للمزامنة مع واجهتنا
       player.on('play', () => setIsPlaying(true));
       player.on('pause', () => setIsPlaying(false));
       player.on('timeupdate', () => setCurrentTime(player.currentTime()));
@@ -131,7 +135,6 @@ export default function CourseViewer() {
       player.on('volumechange', () => setIsMuted(player.muted()));
       player.on('ratechange', () => setPlaybackRate(player.playbackRate()));
 
-      // تنظيف المشغل عند تغيير الدرس أو مغادرة الصفحة
       return () => {
         if (player) {
           player.dispose();
@@ -145,7 +148,6 @@ export default function CourseViewer() {
         playerRef.current.dispose();
         playerRef.current = null;
       }
-      if (videoRef.current) videoRef.current.innerHTML = '';
     };
   }, [activeContent]);
 
@@ -297,7 +299,7 @@ export default function CourseViewer() {
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-6 bg-background">
       <Lock className="w-16 h-16 text-primary/40 animate-pulse" />
       <h2 className="text-3xl font-black text-white">هذا الكورس يتطلب تفعيل</h2>
-      <p className="text-muted-foreground max-w-sm">يرجى استخدام كود التفعيل الخاص بك للوصول إلى هذا المحتوى التعليمي.</p>
+      <p className="text-muted-foreground max-sm:text-xs max-w-sm">يرجى استخدام كود التفعيل الخاص بك للوصول إلى هذا المحتوى التعليمي.</p>
       <Link href="/student/redeem"><Button className="bg-primary h-14 px-10 rounded-2xl font-black shadow-lg">تفعيل الكود الآن</Button></Link>
     </div>
   );
@@ -326,8 +328,8 @@ export default function CourseViewer() {
                     
                     {/* العلامة المائية الفاخرة */}
                     <div 
-                      className="absolute z-[45] pointer-events-none transition-all duration-[3000ms] ease-in-out opacity-20 text-[8px] md:text-xs font-black text-white bg-black/40 px-3 py-1.5 rounded-full border border-white/10 whitespace-nowrap"
-                      style={{ top: watermarkPos.top, left: watermarkPos.left }}
+                      className="absolute z-[45] pointer-events-none transition-all opacity-20 text-[8px] md:text-xs font-black text-white bg-black/40 px-3 py-1.5 rounded-full border border-white/10 whitespace-nowrap"
+                      style={{ top: watermarkPos.top, left: watermarkPos.left, transitionDuration: '3000ms' }}
                     >
                       {studentProfile?.name} | {studentProfile?.studentPhoneNumber}
                     </div>
@@ -495,7 +497,7 @@ export default function CourseViewer() {
                 ) : visibleContents.map((item, idx) => (
                   <button 
                     key={item.id} 
-                    onClick={() => { setActiveContent(item); if(window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                    onClick={() => { setActiveContent(item); if(typeof window !== 'undefined' && window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
                     className={cn(
                       "w-full p-8 md:p-10 text-right flex flex-row-reverse items-center gap-5 md:gap-8 transition-all border-b border-white/5 group relative", 
                       activeContent?.id === item.id ? "bg-primary/15" : "hover:bg-white/5"
