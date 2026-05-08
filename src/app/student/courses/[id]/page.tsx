@@ -4,9 +4,9 @@
 import { useParams } from 'next/navigation';
 import { Navbar } from '@/components/ui/navbar';
 import { Footer } from '@/components/ui/footer';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, setDoc, serverTimestamp, getDocs, updateDoc, where } from 'firebase/firestore';
-import { Loader2, Lock, Clock, Monitor, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, Clock } from 'lucide-react';
 import { useState, useEffect, forwardRef, type ReactNode, isValidElement, type CSSProperties, type ComponentProps, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button as ShadButton } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import Link from 'next/link';
 
 // Vidstack React Imports (Mapped to the user's requested API to ensure compatibility)
 import { 
-  createPlayer,
   MediaPlayer as Container, 
   MediaProvider as Video,
   MediaPoster as Poster, 
@@ -27,7 +26,6 @@ import {
   Controls, 
   FullscreenButton, 
   Gesture, 
-  Hotkey, 
   MuteButton, 
   PipButton as PiPButton, 
   PlayButton, 
@@ -48,6 +46,7 @@ import './player.css';
 // Missing Component Stubs (To prevent Build Errors while keeping user JSX)
 // ================================================================
 
+const Hotkey = (props: any) => null;
 const CastButton = ({ render }: any) => <div className="hidden">{render}</div>;
 const CastEnterIcon = (props: any) => <svg {...props} />;
 const CastExitIcon = (props: any) => <svg {...props} />;
@@ -60,15 +59,17 @@ const ErrorDialog = {
   Close: ({ children }: any) => <button className="media-button">{children}</button>,
 };
 
+const createPlayer = (config?: any) => ({
+  Provider: ({ children }: any) => <>{children}</>
+});
+
 // ================================================================
 // Player (User's Exact Code)
 // ================================================================
 
 const SEEK_TIME = 10;
 
-export const Player = {
-  Provider: ({ children }: { children: ReactNode }) => <>{children}</>
-};
+export const Player = createPlayer({ features: videoFeatures });
 
 export interface VideoPlayerProps {
   src: string;
@@ -440,7 +441,9 @@ export default function CourseViewer() {
 
   if (!hasAccess) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-6 bg-background">
-      <Lock className="w-16 h-16 text-primary/40" />
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto">
+        <Clock className="w-8 h-8" />
+      </div>
       <h2 className="text-3xl font-black text-white">هذا الكورس يتطلب تفعيل</h2>
       <Link href="/student/redeem"><ShadButton className="bg-primary h-14 px-10 rounded-2xl font-black shadow-lg">تفعيل الكود الآن</ShadButton></Link>
     </div>
@@ -456,13 +459,6 @@ export default function CourseViewer() {
               <div className="space-y-6">
                 <div className="relative group">
                    <VideoPlayer src={activeContent.youtubeLink} />
-                   
-                   {/* العلامة المائية العائمة */}
-                   <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
-                      <div className="absolute animate-bounce duration-[3s] opacity-20 text-[10px] font-black text-white whitespace-nowrap bg-black/40 px-2 py-1 rounded" style={{ top: '20%', left: '30%' }}>
-                         {studentProfile?.name} - {studentProfile?.studentPhoneNumber}
-                      </div>
-                   </div>
                 </div>
 
                 <Card className="bg-card border-primary/20 shadow-2xl p-8 rounded-[2rem] relative overflow-hidden text-right">
@@ -491,7 +487,7 @@ export default function CourseViewer() {
               </div>
             ) : activeContent ? (
               <Card className="bg-gradient-to-br from-primary/10 via-card to-background border-2 border-dashed border-primary/20 p-20 text-center space-y-8 rounded-[3rem]">
-                  <Monitor className="w-20 h-20 text-primary mx-auto" />
+                  <Clock className="w-20 h-20 text-primary mx-auto" />
                   <h2 className="text-4xl font-black">{activeContent.title}</h2>
                   <Link href={`/student/exams/${activeContent.id}`}>
                     <ShadButton size="lg" className="h-16 px-12 bg-primary text-primary-foreground font-black rounded-2xl text-xl shadow-xl">
@@ -506,7 +502,7 @@ export default function CourseViewer() {
             <Card className="bg-card border-primary/10 overflow-hidden shadow-2xl rounded-[2.5rem] sticky top-24">
               <CardHeader className="border-b bg-secondary/5 py-6 px-8 flex flex-row-reverse items-center justify-between">
                 <CardTitle className="text-xl font-black flex items-center gap-3 justify-end text-primary">
-                  قائمة الدروس <Monitor className="w-5 h-5" />
+                  قائمة الدروس
                 </CardTitle>
                 <Badge variant="outline" className="border-primary/30 text-primary">{enrollment?.progressPercentage || 0}%</Badge>
               </CardHeader>
