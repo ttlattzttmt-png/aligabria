@@ -53,6 +53,7 @@ export default function CourseViewer() {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const courseRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'courses', id as string) : null, [firestore, id]);
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
@@ -75,7 +76,7 @@ export default function CourseViewer() {
 
   const isFree = course?.price === 0;
 
-  // حماية الفيديوهات من تسجيل الشاشة
+  // حماية الفيديوهات
   useEffect(() => {
     const handleBlur = () => setIsVideoBlocked(true);
     const handleFocus = () => setTimeout(() => setIsVideoBlocked(false), 500);
@@ -87,7 +88,6 @@ export default function CourseViewer() {
     };
   }, []);
 
-  // وظيفة إرسال الأوامر للمشغل عبر YouTube IFrame API
   const sendCommand = (func: string, args: any[] = []) => {
     if (playerRef.current?.contentWindow) {
       playerRef.current.contentWindow.postMessage(JSON.stringify({ 
@@ -109,9 +109,13 @@ export default function CourseViewer() {
   };
 
   const handleSeek = (value: number[]) => {
-    const seekTo = (value[0] / 100) * (duration || 1);
+    if (!duration || duration <= 0) return;
+    setIsDragging(true);
+    const seekTo = (value[0] / 100) * duration;
     setCurrentTime(seekTo);
     sendCommand('seekTo', [seekTo, true]);
+    // إرجاع حالة السحب بعد فترة وجيزة للسماح للمزامنة بالعودة
+    setTimeout(() => setIsDragging(false), 200);
   };
 
   const changeSpeed = (rate: number) => {
@@ -130,26 +134,26 @@ export default function CourseViewer() {
     }
   };
 
-  // مراقبة تغيير وضع التكبير
   useEffect(() => {
     const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFsChange);
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
-  // محرك المزامنة اللحظي المتطور (V7 Sync Engine)
+  // محرك المزامنة اللحظي المحدث - V8 Stability Engine
   useEffect(() => {
-    // نرسل طلب تحديث كل 500 ملي ثانية لضمان حركة شريط التقدم
     const syncTimer = setInterval(() => {
+      // نطلب من يوتيوب إرسال الحالة الحالية والوقت
       sendCommand('listening');
     }, 500);
 
     const handleMessage = (event: MessageEvent) => {
       try {
+        if (typeof event.data !== 'string') return;
         const data = JSON.parse(event.data);
-        // استقبال تحديثات الوقت والمدة
+        
         if (data.event === 'infoDelivery' && data.info) {
-          if (data.info.currentTime !== undefined) {
+          if (data.info.currentTime !== undefined && !isDragging) {
             setCurrentTime(data.info.currentTime);
           }
           if (data.info.duration !== undefined && data.info.duration > 0) {
@@ -159,13 +163,10 @@ export default function CourseViewer() {
             setIsPlaying(data.info.playerState === 1);
           }
         }
-        // استقبال تغييرات الحالة
+        
         if (data.event === 'onStateChange') {
           setIsPlaying(data.info === 1);
-          // عند البدء، نطلب المدة فوراً
-          if (data.info === 1) {
-             sendCommand('listening');
-          }
+          if (data.info === 1) sendCommand('listening');
         }
       } catch (e) {}
     };
@@ -175,15 +176,15 @@ export default function CourseViewer() {
       clearInterval(syncTimer);
       window.removeEventListener('message', handleMessage);
     };
-  }, [activeContent]);
+  }, [activeContent, isDragging]);
 
   const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // تفعيل الاشتراك التلقائي للكورسات المجانية
   useEffect(() => {
     if (isFree && !enrollment && user && id && studentProfile && !isEnrollmentLoading && course && firestore) {
       const enRef = doc(firestore, 'students', user.uid, 'enrollments', id as string);
@@ -254,7 +255,6 @@ export default function CourseViewer() {
             {activeContent?.contentType === 'Video' ? (
               <div className="space-y-6 animate-in fade-in duration-700">
                 
-                {/* الحاوية الذهبية للمشغل - مشغل البشمهندس Secure V7 */}
                 <div 
                   ref={playerContainerRef} 
                   className={cn(
@@ -263,9 +263,8 @@ export default function CourseViewer() {
                   )}
                 >
                     {/* طبقة حماية تمنع التفاعل مع اليوتيوب وتسمح بالتفاعل مع عناصرنا فقط */}
-                    <div className="absolute inset-0 z-40 bg-transparent pointer-events-auto" onContextMenu={e => e.preventDefault()} />
+                    <div className="absolute inset-0 z-40 bg-transparent" onContextMenu={e => e.preventDefault()} />
                     
-                    {/* واجهة التعتيم الذكية */}
                     {isVideoBlocked && (
                       <div className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center text-center p-8">
                          <EyeOff className="w-16 h-16 text-primary mb-4 animate-pulse" />
@@ -276,61 +275,62 @@ export default function CourseViewer() {
 
                     <iframe 
                       ref={playerRef}
-                      src={`https://www.youtube.com/embed/${getYouTubeId(activeContent.youtubeLink)}?enablejsapi=1&rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`} 
+                      src={`https://www.youtube.com/embed/${getYouTubeId(activeContent.youtubeLink)}?enablejsapi=1&rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&vq=hd1080&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`} 
                       className="w-full h-full relative z-10 pointer-events-none"
                       allow="autoplay; encrypted-media"
                     />
 
-                    {/* واجهة التحكم المخصصة (فوق كل شيء) - تظهر دائماً عند التكبير */}
-                    <div className="absolute bottom-0 left-0 right-0 z-[60] bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="space-y-4">
-                        <div className="flex flex-row-reverse items-center gap-4">
-                           <span className="text-[11px] text-white font-mono min-w-[100px] text-left" dir="ltr">
+                    {/* واجهة التحكم المخصصة - V8 UI */}
+                    <div className="absolute bottom-0 left-0 right-0 z-[60] bg-gradient-to-t from-black via-black/40 to-transparent p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="space-y-6">
+                        <div className="flex flex-row-reverse items-center gap-6">
+                           <span className="text-xs text-white font-black min-w-[120px] text-left tabular-nums" dir="ltr">
                              {formatTime(currentTime)} / {formatTime(duration)}
                            </span>
-                           <Slider 
-                            value={[duration > 0 ? (currentTime / duration) * 100 : 0]} 
-                            max={100} 
-                            step={0.1}
-                            onValueChange={handleSeek}
-                            className="cursor-pointer flex-grow relative z-[70] pointer-events-auto"
-                           />
+                           <div className="flex-grow pt-2">
+                             <Slider 
+                              value={[duration > 0 ? (currentTime / duration) * 100 : 0]} 
+                              max={100} 
+                              step={0.1}
+                              onValueChange={handleSeek}
+                              className="cursor-pointer relative z-[70] pointer-events-auto"
+                             />
+                           </div>
                         </div>
                         
-                        <div className="flex items-center justify-between flex-row-reverse px-2">
-                          <div className="flex items-center gap-8 flex-row-reverse">
+                        <div className="flex items-center justify-between flex-row-reverse px-2 pb-2">
+                          <div className="flex items-center gap-10 flex-row-reverse">
                             <button onClick={togglePlay} className="text-white hover:text-primary transition-all active:scale-90 relative z-[70] pointer-events-auto">
-                              {isPlaying ? <Pause className="w-10 h-10 fill-current" /> : <Play className="w-10 h-10 fill-current" />}
+                              {isPlaying ? <Pause className="w-12 h-12 fill-current" /> : <Play className="w-12 h-12 fill-current" />}
                             </button>
                             
                             <button onClick={() => {
                               if(isMuted) { sendCommand('unMute'); setIsMuted(false); }
                               else { sendCommand('mute'); setIsMuted(true); }
-                            }} className="text-white relative z-[70] pointer-events-auto">
-                              {isMuted ? <VolumeX className="w-7 h-7" /> : <Volume2 className="w-7 h-7" />}
+                            }} className="text-white hover:text-primary relative z-[70] pointer-events-auto">
+                              {isMuted ? <VolumeX className="w-8 h-8" /> : <Volume2 className="w-8 h-8" />}
                             </button>
                           </div>
 
-                          <div className="flex items-center gap-4 relative">
-                             {/* قائمة السرعة المدمجة لتعمل داخل التكبير */}
+                          <div className="flex items-center gap-6 relative">
                              <div className="relative">
                                 <button 
                                   onClick={() => setShowSpeedMenu(!showSpeedMenu)} 
-                                  className="text-white/90 hover:text-primary flex items-center gap-2 text-sm font-black bg-white/10 px-5 py-2.5 rounded-2xl border border-white/10 relative z-[70] pointer-events-auto"
+                                  className="text-white/90 hover:text-primary flex items-center gap-2 text-sm font-black bg-white/10 px-6 py-3 rounded-2xl border border-white/10 relative z-[70] pointer-events-auto"
                                 >
                                   <Gauge className="w-4 h-4" />
                                   <span>{playbackRate}x</span>
                                 </button>
                                 
                                 {showSpeedMenu && (
-                                  <div className="absolute bottom-full mb-2 right-0 bg-card border border-primary/20 rounded-xl overflow-hidden shadow-2xl z-[100] w-32 animate-in slide-in-from-bottom-2">
+                                  <div className="absolute bottom-full mb-4 right-0 bg-card border border-primary/20 rounded-2xl overflow-hidden shadow-2xl z-[100] w-40 animate-in slide-in-from-bottom-2">
                                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                                        <button 
                                          key={rate} 
                                          onClick={() => changeSpeed(rate)}
                                          className={cn(
-                                           "w-full text-right px-4 py-3 text-xs font-bold hover:bg-primary/10 transition-colors pointer-events-auto",
-                                           playbackRate === rate ? "text-primary bg-primary/5" : "text-white"
+                                           "w-full text-right px-6 py-4 text-xs font-black hover:bg-primary hover:text-primary-foreground transition-all pointer-events-auto",
+                                           playbackRate === rate ? "bg-primary/20 text-primary" : "text-white"
                                          )}
                                        >
                                          {rate}x {rate === 1 && "(عادي)"}
@@ -341,7 +341,7 @@ export default function CourseViewer() {
                              </div>
 
                              <button onClick={toggleFullScreen} className="text-white hover:text-primary transition-all p-2 relative z-[70] pointer-events-auto">
-                                <Maximize className="w-7 h-7" />
+                                <Maximize className="w-8 h-8" />
                              </button>
                           </div>
                         </div>
