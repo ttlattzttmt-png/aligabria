@@ -141,6 +141,9 @@ export default function AdminStudents() {
 
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
         <DialogContent className="max-w-4xl bg-card rounded-3xl overflow-hidden p-0 text-right">
+          <DialogHeader className="sr-only">
+            <DialogTitle>بيانات الطالب: {selectedStudent?.name}</DialogTitle>
+          </DialogHeader>
           {selectedStudent && (
             <ScrollArea className="max-h-[85vh]">
               <div className="p-8 bg-primary/5 border-b">
