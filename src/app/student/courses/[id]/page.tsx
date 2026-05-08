@@ -21,7 +21,6 @@ import {
   ShieldCheck,
   Zap,
   EyeOff,
-  Settings,
   Gauge
 } from 'lucide-react';
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -53,9 +52,9 @@ export default function CourseViewer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(100);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const courseRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'courses', id as string) : null, [firestore, id]);
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
@@ -119,6 +118,7 @@ export default function CourseViewer() {
     if (duration > 0) {
       const seekTo = (value[0] / 100) * duration;
       sendPlayerCommand('seekTo', [seekTo, true]);
+      setCurrentTime(seekTo);
     }
   };
 
@@ -130,8 +130,10 @@ export default function CourseViewer() {
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
       playerContainerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
     } else {
       document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
@@ -142,23 +144,38 @@ export default function CourseViewer() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // استقبال رسائل حالة المشغل من يوتيوب
+  // استقبال رسائل حالة المشغل من يوتيوب وتحديث شريط التقدم
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        // تحديث الوقت والمدة إذا كان المشغل يرسل التحديثات
+        
+        // التقاط التحديثات الدورية (Progress)
         if (data.event === 'infoDelivery' && data.info) {
           if (data.info.currentTime !== undefined) setCurrentTime(data.info.currentTime);
           if (data.info.duration !== undefined) setDuration(data.info.duration);
-          if (data.info.playerState === 1) setIsPlaying(true);
-          if (data.info.playerState === 2) setIsPlaying(false);
+        }
+
+        // التقاط تغيير الحالة (Play/Pause)
+        if (data.event === 'onStateChange') {
+          const state = data.info;
+          if (state === 1) setIsPlaying(true);
+          if (state === 2) setIsPlaying(false);
         }
       } catch (e) {}
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // مراقبة الخروج من وضع ملء الشاشة
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
   useEffect(() => {
@@ -208,16 +225,16 @@ export default function CourseViewer() {
             {activeContent?.contentType === 'Video' ? (
               <div className="space-y-6 animate-in fade-in duration-700">
                 {/* مشغل فيديو البشمهندس الخاص والآمن */}
-                <div ref={playerContainerRef} className="relative bg-black rounded-[2rem] overflow-hidden border-[4px] border-card shadow-2xl aspect-video group">
-                    {/* طبقة حماية تمنع التفاعل مع المشغل الأصلي */}
+                <div ref={playerContainerRef} className="relative bg-black rounded-[2.5rem] overflow-hidden border-[4px] border-card shadow-2xl aspect-video group">
+                    {/* طبقة حماية تمنع التفاعل المباشر مع الفيديو */}
                     <div className="absolute inset-0 z-20 cursor-default bg-transparent" />
                     
-                    {/* واجهة التعتيم الذكية */}
+                    {/* واجهة التعتيم الذكية عند الخروج من الصفحة */}
                     {isVideoBlocked && (
-                      <div className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center text-center p-8">
+                      <div className="absolute inset-0 z-[100] bg-black/98 backdrop-blur-3xl flex flex-col items-center justify-center text-center p-8">
                          <EyeOff className="w-16 h-16 text-primary mb-4 animate-pulse" />
                          <h3 className="text-2xl font-black text-white">المحتوى محمي</h3>
-                         <p className="text-primary font-bold mt-2">يرجى العودة للصفحة لمواصلة المشاهدة بأمان.</p>
+                         <p className="text-primary font-bold mt-2">عد للصفحة لمواصلة المشاهدة بأمان.</p>
                       </div>
                     )}
 
@@ -228,51 +245,49 @@ export default function CourseViewer() {
                       allow="autoplay; encrypted-media"
                     />
 
-                    {/* شريط التحكم المخصص للمنصة */}
-                    <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* شريط التحكم المخصص للمنصة - يظهر في الـ Fullscreen أيضاً */}
+                    <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="space-y-4">
                         <div className="flex flex-row-reverse items-center gap-4">
-                           <span className="text-[10px] text-white/70 font-mono" dir="ltr">{formatTime(currentTime)} / {formatTime(duration)}</span>
+                           <span className="text-[10px] text-white font-mono min-w-[80px]" dir="ltr">{formatTime(currentTime)} / {formatTime(duration)}</span>
                            <Slider 
                             value={[duration > 0 ? (currentTime / duration) * 100 : 0]} 
                             max={100} 
                             step={0.1}
                             onValueChange={handleSeek}
-                            className="cursor-pointer flex-grow"
+                            className="cursor-pointer flex-grow z-50"
                            />
                         </div>
                         
                         <div className="flex items-center justify-between flex-row-reverse px-2">
                           <div className="flex items-center gap-6 flex-row-reverse">
-                            <button onClick={togglePlay} className="text-white hover:text-primary transition-all active:scale-90">
+                            <button onClick={togglePlay} className="text-white hover:text-primary transition-all active:scale-90 z-50">
                               {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current" />}
                             </button>
                             
-                            <div className="flex items-center gap-2 flex-row-reverse">
-                              <button onClick={() => {
-                                if(isMuted) { sendPlayerCommand('unMute'); setIsMuted(false); }
-                                else { sendPlayerCommand('mute'); setIsMuted(true); }
-                              }} className="text-white">
-                                {isMuted ? <VolumeX /> : <Volume2 />}
-                              </button>
-                            </div>
+                            <button onClick={() => {
+                              if(isMuted) { sendPlayerCommand('unMute'); setIsMuted(false); }
+                              else { sendPlayerCommand('mute'); setIsMuted(true); }
+                            }} className="text-white z-50">
+                              {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                            </button>
                           </div>
 
                           <div className="flex items-center gap-5">
                              {/* اختيار السرعة */}
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button className="text-white/80 hover:text-primary flex items-center gap-1.5 text-xs font-black bg-white/10 px-3 py-1.5 rounded-xl border border-white/5">
+                                  <button className="text-white/90 hover:text-primary flex items-center gap-1.5 text-xs font-black bg-white/10 px-4 py-2 rounded-xl border border-white/10 z-50 transition-colors">
                                     <Gauge className="w-4 h-4" />
                                     <span>{playbackRate}x</span>
                                   </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-card border-primary/20">
+                                <DropdownMenuContent className="bg-card border-primary/20 z-[100]">
                                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                                     <DropdownMenuItem 
                                       key={rate} 
                                       onClick={() => changeSpeed(rate)}
-                                      className={cn("text-xs font-bold", playbackRate === rate && "text-primary bg-primary/10")}
+                                      className={cn("text-xs font-bold py-2 cursor-pointer", playbackRate === rate && "text-primary bg-primary/10")}
                                     >
                                       {rate}x {rate === 1 && "(عادي)"}
                                     </DropdownMenuItem>
@@ -280,26 +295,26 @@ export default function CourseViewer() {
                                 </DropdownMenuContent>
                              </DropdownMenu>
 
-                             <div className="text-white/40 font-mono text-[9px] flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg">
-                               <span>Secure Mode</span>
+                             <div className="hidden md:flex text-white/60 font-mono text-[9px] items-center gap-1 bg-white/5 px-2 py-1 rounded-lg">
+                               <span>Secure 1080p</span>
                                <ShieldCheck className="w-3 h-3 text-primary" />
                              </div>
 
-                             <button onClick={toggleFullScreen} className="text-white hover:text-primary transition-all">
-                                <Maximize className="w-5 h-5" />
+                             <button onClick={toggleFullScreen} className="text-white hover:text-primary transition-all z-50 p-2">
+                                <Maximize className="w-6 h-6" />
                              </button>
                           </div>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="absolute top-4 left-6 z-30 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black border border-white/10 pointer-events-none flex items-center gap-2 text-white">
+                    <div className="absolute top-4 left-6 z-30 bg-black/50 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black border border-white/10 pointer-events-none flex items-center gap-2 text-white">
                        <Zap className="w-3 h-3 text-primary animate-pulse" /> Al-Bashmohandes Secure PRO
                     </div>
                 </div>
 
                 <Card className="bg-card/50 backdrop-blur-xl p-8 rounded-[2rem] border-primary/10 shadow-lg relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-1 h-full bg-primary/20" />
+                  <div className="absolute top-0 right-0 w-1.5 h-full bg-primary" />
                   <div className="flex flex-col md:flex-row-reverse justify-between items-center gap-6">
                     <div className="text-right flex-grow space-y-1">
                       <h1 className="text-2xl font-black text-primary">{activeContent.title}</h1>
