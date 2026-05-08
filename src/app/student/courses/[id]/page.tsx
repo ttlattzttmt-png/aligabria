@@ -46,9 +46,11 @@ export default function CourseViewer() {
   const [activeContent, setActiveContent] = useState<any>(null);
   const [isVideoBlocked, setIsVideoBlocked] = useState(false);
 
-  // مراجع وبيانات المشغل الخاص
+  // مراجع المشغل
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLIFrameElement>(null);
+  
+  // حالة المشغل
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -77,60 +79,49 @@ export default function CourseViewer() {
 
   const isFree = course?.price === 0;
 
-  // حماية الفيديوهات من التسجيل أو الخروج
+  // حماية الفيديوهات
   useEffect(() => {
     const handleBlur = () => setIsVideoBlocked(true);
-    const handleFocus = () => setTimeout(() => setIsVideoBlocked(false), 1000);
-    const preventContext = (e: MouseEvent) => e.preventDefault();
-
+    const handleFocus = () => setTimeout(() => setIsVideoBlocked(false), 500);
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
-    document.addEventListener('contextmenu', preventContext);
-
     return () => {
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('contextmenu', preventContext);
     };
   }, []);
 
-  // وظيفة إرسال الأوامر للمشغل (يوتيوب API)
-  const sendPlayerCommand = (command: string, args: any[] = []) => {
+  // وظيفة إرسال الأوامر للمشغل
+  const sendCommand = (func: string, args: any[] = []) => {
     if (playerRef.current?.contentWindow) {
-      playerRef.current.contentWindow.postMessage(JSON.stringify({
-        event: 'command',
-        func: command,
-        args: args
-      }), '*');
+      playerRef.current.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
     }
   };
 
   const togglePlay = () => {
     if (isPlaying) {
-      sendPlayerCommand('pauseVideo');
+      sendCommand('pauseVideo');
       setIsPlaying(false);
     } else {
-      sendPlayerCommand('playVideo');
+      sendCommand('playVideo');
       setIsPlaying(true);
     }
   };
 
   const handleSeek = (value: number[]) => {
-    if (duration > 0) {
-      const seekToTime = (value[0] / 100) * duration;
-      sendPlayerCommand('seekTo', [seekToTime, true]);
-      setCurrentTime(seekToTime);
-    }
+    const seekTo = (value[0] / 100) * duration;
+    setCurrentTime(seekTo);
+    sendCommand('seekTo', [seekTo, true]);
   };
 
   const changeSpeed = (rate: number) => {
     setPlaybackRate(rate);
-    sendPlayerCommand('setPlaybackRate', [rate]);
+    sendCommand('setPlaybackRate', [rate]);
   };
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
-      playerContainerRef.current?.requestFullscreen();
+      playerContainerRef.current?.requestFullscreen().catch(e => console.error(e));
       setIsFullscreen(true);
     } else {
       document.exitFullscreen();
@@ -138,46 +129,43 @@ export default function CourseViewer() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // مراقب الحالة والتزامن اللحظي مع المشغل
+  // محرك المزامنة اللحظي (Sync Engine)
   useEffect(() => {
+    const syncTimer = setInterval(() => {
+      // نطلب من يوتيوب إرسال حالته الحالية
+      sendCommand('listening');
+    }, 500);
+
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        
-        // استلام بيانات الوقت والمدة
         if (data.event === 'infoDelivery' && data.info) {
           if (data.info.currentTime !== undefined) setCurrentTime(data.info.currentTime);
           if (data.info.duration !== undefined) setDuration(data.info.duration);
+          if (data.info.playerState !== undefined) {
+            if (data.info.playerState === 1) setIsPlaying(true);
+            if (data.info.playerState === 2) setIsPlaying(false);
+          }
         }
-
-        // استلام حالة التشغيل/الإيقاف
         if (data.event === 'onStateChange') {
-          const state = data.info;
-          if (state === 1) setIsPlaying(true); // Playing
-          if (state === 2) setIsPlaying(false); // Paused
-          if (state === 0) setIsPlaying(false); // Ended
+          if (data.info === 1) setIsPlaying(true);
+          if (data.info === 2) setIsPlaying(false);
         }
       } catch (e) {}
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      clearInterval(syncTimer);
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
-  // مراقبة الخروج من وضع ملء الشاشة
-  useEffect(() => {
-    const handleFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
-  }, []);
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // تفعيل الاشتراك التلقائي للكورسات المجانية
   useEffect(() => {
@@ -199,11 +187,13 @@ export default function CourseViewer() {
     const newPercent = Math.min(100, Math.round((watchedSnap.size / (visibleContents.length || 1)) * 100));
 
     await updateDoc(doc(firestore, 'students', user.uid, 'enrollments', id as string), { progressPercentage: newPercent, studentName: studentProfile.name, lastActivityDate: new Date().toISOString() });
-    toast({ title: "أحسنت يا بشمهندس!", description: `إنجازك في هذا الكورس وصل لـ ${newPercent}%` });
+    toast({ title: "عاش يا بشمهندس!", description: `وصلت لنسبة إنجاز ${newPercent}% في هذا الكورس.` });
   };
 
   useEffect(() => { 
-    if (visibleContents.length > 0 && !activeContent) setActiveContent(visibleContents[0]); 
+    if (visibleContents.length > 0 && !activeContent) {
+      setActiveContent(visibleContents[0]);
+    }
   }, [visibleContents, activeContent]);
 
   if (isUserLoading || isCourseLoading || isEnrollmentLoading || isContentLoading) return <div className="flex justify-center py-40"><Loader2 className="w-12 animate-spin text-primary" /></div>;
@@ -212,9 +202,9 @@ export default function CourseViewer() {
   if (!hasAccess) return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-6 bg-background">
       <Lock className="w-16 h-16 text-primary/40 animate-pulse" />
-      <h2 className="text-3xl font-black">هذا الكورس يتطلب تفعيل</h2>
-      <p className="text-muted-foreground max-w-sm">بشمهندس، هذا المحتوى محمي. يرجى تفعيل الكود الخاص بك للوصول للشروحات.</p>
-      <Link href="/student/redeem"><Button className="bg-primary h-14 px-10 rounded-2xl font-bold">تفعيل كود الآن</Button></Link>
+      <h2 className="text-3xl font-black text-white">هذا الكورس يتطلب تفعيل</h2>
+      <p className="text-muted-foreground max-w-sm">يرجى استخدام كود التفعيل الخاص بك للوصول إلى هذا المحتوى التعليمي.</p>
+      <Link href="/student/redeem"><Button className="bg-primary h-14 px-10 rounded-2xl font-black shadow-lg">تفعيل الكود الآن</Button></Link>
     </div>
   );
 
@@ -227,75 +217,77 @@ export default function CourseViewer() {
             {activeContent?.contentType === 'Video' ? (
               <div className="space-y-6 animate-in fade-in duration-700">
                 
-                {/* الحاوية الرئيسية للمشغل */}
+                {/* الحاوية الذهبية للمشغل */}
                 <div 
                   ref={playerContainerRef} 
                   className={cn(
-                    "relative bg-black overflow-hidden shadow-2xl transition-all duration-300 group",
-                    isFullscreen ? "w-screen h-screen rounded-none z-[9999]" : "rounded-[2.5rem] border-[4px] border-card aspect-video"
+                    "relative bg-black overflow-hidden shadow-2xl transition-all duration-300 group select-none",
+                    isFullscreen ? "fixed inset-0 w-full h-full z-[9999] rounded-none" : "rounded-[2.5rem] border-[4px] border-card aspect-video"
                   )}
                 >
-                    {/* طبقة حماية تمنع التفاعل المباشر مع الفيديو (Shield) */}
-                    <div className="absolute inset-0 z-30 cursor-default bg-transparent" />
+                    {/* طبقة حماية تمنع التفاعل مع اليوتيوب وتسمح بالتفاعل مع عناصرنا فقط */}
+                    <div className="absolute inset-0 z-40 bg-transparent pointer-events-auto" onContextMenu={e => e.preventDefault()} />
                     
-                    {/* واجهة التعتيم الذكية */}
+                    {/* واجهة التعتيم */}
                     {isVideoBlocked && (
                       <div className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center text-center p-8">
                          <EyeOff className="w-16 h-16 text-primary mb-4 animate-pulse" />
                          <h3 className="text-2xl font-black text-white">المحتوى محمي</h3>
-                         <p className="text-primary font-bold mt-2">يرجى العودة للصفحة لمواصلة المشاهدة.</p>
+                         <p className="text-primary font-bold mt-2">يرجى العودة للصفحة لمتابعة الشرح يا بشمهندس.</p>
                       </div>
                     )}
 
                     <iframe 
                       ref={playerRef}
-                      src={`https://www.youtube.com/embed/${getYouTubeId(activeContent.youtubeLink)}?enablejsapi=1&rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&vq=hd1080`} 
+                      src={`https://www.youtube.com/embed/${getYouTubeId(activeContent.youtubeLink)}?enablejsapi=1&rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`} 
                       className="w-full h-full relative z-10 pointer-events-none"
                       allow="autoplay; encrypted-media"
                     />
 
-                    {/* واجهة التحكم المخصصة للمنصة (تظهر دائماً فوق الفيديو) */}
-                    <div className="absolute bottom-0 left-0 right-0 z-[50] bg-gradient-to-t from-black/95 via-black/50 to-transparent p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* واجهة التحكم المخصصة (فوق كل شيء) */}
+                    <div className="absolute bottom-0 left-0 right-0 z-[60] bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 md:p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="space-y-4">
                         <div className="flex flex-row-reverse items-center gap-4">
-                           <span className="text-[10px] text-white font-mono min-w-[90px] text-left" dir="ltr">{formatTime(currentTime)} / {formatTime(duration)}</span>
+                           <span className="text-[11px] text-white font-mono min-w-[100px] text-left" dir="ltr">
+                             {formatTime(currentTime)} / {formatTime(duration)}
+                           </span>
                            <Slider 
                             value={[duration > 0 ? (currentTime / duration) * 100 : 0]} 
                             max={100} 
                             step={0.1}
                             onValueChange={handleSeek}
-                            className="cursor-pointer flex-grow relative z-[60]"
+                            className="cursor-pointer flex-grow relative z-[70] pointer-events-auto"
                            />
                         </div>
                         
                         <div className="flex items-center justify-between flex-row-reverse px-2">
-                          <div className="flex items-center gap-6 flex-row-reverse">
-                            <button onClick={togglePlay} className="text-white hover:text-primary transition-all active:scale-90 relative z-[60]">
-                              {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current" />}
+                          <div className="flex items-center gap-8 flex-row-reverse">
+                            <button onClick={togglePlay} className="text-white hover:text-primary transition-all active:scale-90 relative z-[70] pointer-events-auto">
+                              {isPlaying ? <Pause className="w-10 h-10 fill-current" /> : <Play className="w-10 h-10 fill-current" />}
                             </button>
                             
                             <button onClick={() => {
-                              if(isMuted) { sendPlayerCommand('unMute'); setIsMuted(false); }
-                              else { sendPlayerCommand('mute'); setIsMuted(true); }
-                            }} className="text-white relative z-[60]">
-                              {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                              if(isMuted) { sendCommand('unMute'); setIsMuted(false); }
+                              else { sendCommand('mute'); setIsMuted(true); }
+                            }} className="text-white relative z-[70] pointer-events-auto">
+                              {isMuted ? <VolumeX className="w-7 h-7" /> : <Volume2 className="w-7 h-7" />}
                             </button>
                           </div>
 
                           <div className="flex items-center gap-4">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button className="text-white/90 hover:text-primary flex items-center gap-1.5 text-xs font-black bg-white/10 px-4 py-2 rounded-xl border border-white/10 relative z-[60]">
+                                  <button className="text-white/90 hover:text-primary flex items-center gap-2 text-sm font-black bg-white/10 px-5 py-2.5 rounded-2xl border border-white/10 relative z-[70] pointer-events-auto">
                                     <Gauge className="w-4 h-4" />
                                     <span>{playbackRate}x</span>
                                   </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-card border-primary/20 z-[1000]">
+                                <DropdownMenuContent className="bg-card border-primary/20 z-[10000]">
                                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                                     <DropdownMenuItem 
                                       key={rate} 
                                       onClick={() => changeSpeed(rate)}
-                                      className={cn("text-xs font-bold py-2 cursor-pointer", playbackRate === rate && "text-primary bg-primary/10")}
+                                      className={cn("text-sm font-bold py-3 px-6 cursor-pointer", playbackRate === rate && "text-primary bg-primary/10")}
                                     >
                                       {rate}x {rate === 1 && "(عادي)"}
                                     </DropdownMenuItem>
@@ -303,58 +295,52 @@ export default function CourseViewer() {
                                 </DropdownMenuContent>
                              </DropdownMenu>
 
-                             <div className="hidden md:flex text-white/60 font-mono text-[9px] items-center gap-1 bg-white/5 px-2 py-1 rounded-lg">
-                               <span>HD SECURE</span>
-                               <ShieldCheck className="w-3 h-3 text-primary" />
-                             </div>
-
-                             <button onClick={toggleFullScreen} className="text-white hover:text-primary transition-all p-2 relative z-[60]">
-                                <Maximize className="w-6 h-6" />
+                             <button onClick={toggleFullScreen} className="text-white hover:text-primary transition-all p-2 relative z-[70] pointer-events-auto">
+                                <Maximize className="w-7 h-7" />
                              </button>
                           </div>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="absolute top-4 left-6 z-40 bg-black/50 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black border border-white/10 pointer-events-none flex items-center gap-2 text-white">
-                       <Zap className="w-3 h-3 text-primary animate-pulse" /> Al-Bashmohandes Secure Engine
+                    <div className="absolute top-6 left-8 z-40 bg-black/60 backdrop-blur-xl px-5 py-2 rounded-full text-[11px] font-black border border-white/10 flex items-center gap-3 text-white pointer-events-none">
+                       <Zap className="w-4 h-4 text-primary animate-pulse" /> Al-Bashmohandes Secure HD
                     </div>
                 </div>
 
-                <Card className="bg-card/50 backdrop-blur-xl p-8 rounded-[2rem] border-primary/10 shadow-lg relative overflow-hidden">
+                <Card className="bg-card/50 backdrop-blur-xl p-8 rounded-[2.5rem] border-primary/10 shadow-lg relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-1.5 h-full bg-primary" />
                   <div className="flex flex-col md:flex-row-reverse justify-between items-center gap-6">
                     <div className="text-right flex-grow space-y-1">
                       <h1 className="text-2xl font-black text-primary">{activeContent.title}</h1>
-                      <div className="flex items-center gap-3 justify-end text-[10px] text-muted-foreground font-bold">
-                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> تاريخ الرفع: {activeContent.createdAt?.seconds ? new Date(activeContent.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : 'الآن'}</span>
-                         <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-accent" /> دقة آمنة HD 1080p</span>
-                      </div>
+                      <p className="text-[10px] text-muted-foreground font-bold flex items-center gap-2 justify-end">
+                        <Clock className="w-3 h-3" /> تم النشر: {activeContent.createdAt?.seconds ? new Date(activeContent.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : 'الآن'}
+                      </p>
                     </div>
                     <Button 
                       onClick={() => markAsWatched(activeContent.id)} 
                       disabled={watchedVideos?.some(v => v.courseContentId === activeContent.id)} 
-                      className="h-16 px-12 rounded-2xl font-black bg-primary text-primary-foreground shadow-xl shadow-primary/20 transition-all active:scale-95"
+                      className="h-16 px-12 rounded-2xl font-black bg-primary text-primary-foreground shadow-xl shadow-primary/20"
                     >
                       {watchedVideos?.some(v => v.courseContentId === activeContent.id) ? (
-                        <span className="flex items-center gap-2"><CheckCircle className="w-5 h-5" /> تم الحضور ✓</span>
-                      ) : "تأكيد حضور الحصة"}
+                        <span className="flex items-center gap-2"><CheckCircle className="w-5 h-5" /> تم تأكيد الحضور ✓</span>
+                      ) : "تأكيد حضور هذه الحصة"}
                     </Button>
                   </div>
                 </Card>
               </div>
             ) : activeContent ? (
-              <Card className="bg-gradient-to-br from-primary/5 via-card to-background border-2 border-dashed border-primary/20 p-16 text-center space-y-8 rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-500">
-                  <div className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner">
+              <Card className="bg-gradient-to-br from-primary/5 via-card to-background border-2 border-dashed border-primary/20 p-20 text-center space-y-8 rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-500">
+                  <div className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary">
                     <FileQuestion className="w-12 h-12" />
                   </div>
                   <div className="space-y-2">
                     <h2 className="text-4xl font-black text-foreground">{activeContent.title}</h2>
-                    <p className="text-muted-foreground font-bold italic">حان وقت اختبار ذكائك الهندسي يا بشمهندس.</p>
+                    <p className="text-muted-foreground font-bold italic">هذا الاختبار جاهز لك الآن يا بشمهندس.</p>
                   </div>
                   <Link href={`/student/exams/${activeContent.id}`} className="block pt-6">
-                    <Button size="lg" className="h-20 px-20 bg-primary text-primary-foreground font-black rounded-3xl text-2xl shadow-2xl shadow-primary/20 hover:scale-[1.02] transition-transform">
-                      ابدأ الامتحان الآن ✍️
+                    <Button size="lg" className="h-20 px-24 bg-primary text-primary-foreground font-black rounded-3xl text-2xl shadow-2xl shadow-primary/20 hover:scale-[1.03] transition-transform">
+                      ابدأ الاختبار الآن ✍️
                     </Button>
                   </Link>
               </Card>
@@ -364,26 +350,26 @@ export default function CourseViewer() {
           <div className="lg:col-span-1">
             <Card className="bg-card/40 backdrop-blur-md border-primary/10 overflow-hidden shadow-2xl rounded-[2.5rem] sticky top-24">
               <CardHeader className="border-b bg-secondary/20 py-6 px-8 flex flex-row-reverse items-center justify-between">
-                <CardTitle className="text-xl font-black flex items-center gap-3 justify-end">
-                  محتويات الكورس <Layout className="w-6 h-6 text-primary" />
+                <CardTitle className="text-xl font-black flex items-center gap-3 justify-end text-primary">
+                  دروس الكورس <Layout className="w-6 h-6" />
                 </CardTitle>
                 <Badge className="bg-primary/20 text-primary px-3 py-1 rounded-full font-black">{enrollment?.progressPercentage || 0}%</Badge>
               </CardHeader>
               <CardContent className="p-0 max-h-[65vh] overflow-y-auto">
                 {visibleContents.length === 0 ? (
-                   <div className="p-10 text-center text-muted-foreground italic font-bold">لا يوجد محتوى مضاف حالياً.</div>
+                   <div className="p-10 text-center text-muted-foreground italic">لا يوجد محتوى متاح حالياً.</div>
                 ) : visibleContents.map((item, idx) => (
                   <button 
                     key={item.id} 
                     onClick={() => setActiveContent(item)} 
                     className={cn(
-                      "w-full p-6 text-right flex flex-row-reverse items-center gap-5 transition-all border-b border-white/5 group", 
-                      activeContent?.id === item.id ? "bg-primary/10 border-r-4 border-primary shadow-inner" : "hover:bg-secondary/10"
+                      "w-full p-6 text-right flex flex-row-reverse items-center gap-5 transition-all border-b border-white/5", 
+                      activeContent?.id === item.id ? "bg-primary/10 border-r-4 border-primary" : "hover:bg-secondary/10"
                     )}
                   >
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm transition-colors shadow-sm", 
-                      watchedVideos?.some(v => v.courseContentId === item.id) ? "bg-accent text-white" : "bg-secondary group-hover:bg-primary/20"
+                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm", 
+                      watchedVideos?.some(v => v.courseContentId === item.id) ? "bg-accent text-white" : "bg-secondary"
                     )}>
                       {idx+1}
                     </div>
@@ -392,7 +378,7 @@ export default function CourseViewer() {
                         {item.title}
                       </p>
                       <p className="text-[10px] text-muted-foreground font-black mt-0.5">
-                        {item.contentType === 'Video' ? 'شرح فيديو آمن' : 'اختبار إلكتروني'}
+                        {item.contentType === 'Video' ? 'شرح فيديو مؤمن' : 'اختبار إلكتروني'}
                       </p>
                     </div>
                   </button>
