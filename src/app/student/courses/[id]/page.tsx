@@ -21,7 +21,6 @@ import {
   MediaProvider as Video,
   MediaPoster as Poster, 
   useMediaPlayer as usePlayer, 
-  MediaBuffering as BufferingIndicator, 
   CaptionButton as CaptionsButton, 
   Controls, 
   FullscreenButton, 
@@ -43,13 +42,21 @@ import { videoFeatures } from '@vidstack/react';
 import './player.css';
 
 // ================================================================
-// Missing Component Stubs (To prevent Build Errors while keeping user JSX)
+// Stubs for missing exports to ensure the provided code runs
 // ================================================================
+
+const createPlayer = (config?: any) => ({
+  Provider: ({ children }: any) => <>{children}</>
+});
 
 const Hotkey = (props: any) => null;
 const CastButton = ({ render }: any) => <div className="hidden">{render}</div>;
 const CastEnterIcon = (props: any) => <svg {...props} />;
 const CastExitIcon = (props: any) => <svg {...props} />;
+
+const BufferingIndicator = ({ render }: { render: (props: any) => ReactNode }) => {
+  return <>{render({})}</>;
+};
 
 const ErrorDialog = {
   Root: ({ children }: any) => <>{children}</>,
@@ -58,10 +65,6 @@ const ErrorDialog = {
   Description: ({ children }: any) => <div className="media-error__description">{children}</div>,
   Close: ({ children }: any) => <button className="media-button">{children}</button>,
 };
-
-const createPlayer = (config?: any) => ({
-  Provider: ({ children }: any) => <>{children}</>
-});
 
 // ================================================================
 // Player (User's Exact Code)
