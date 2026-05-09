@@ -7,11 +7,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Lock, User, Loader2, Info } from 'lucide-react';
+import { ShieldCheck, Lock, User, Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -28,7 +27,6 @@ export default function LoginPage() {
     e.preventDefault();
     if (!auth) return;
     
-    // منع تسجيل دخول الماستر من صفحة الطالب/الادمن العادية وتوجيهه للمكان الصحيح
     if (email.toLowerCase() === MASTER_EMAIL.toLowerCase()) {
       toast({
         variant: "destructive",
@@ -40,11 +38,9 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      // 1. تسجيل الدخول عبر Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userEmail = userCredential.user.email?.toLowerCase();
 
-      // 2. التوجيه المباشر والذكي
       if (userEmail === ADMIN_EMAIL.toLowerCase()) {
         toast({ title: "مرحباً بك يا بشمهندس", description: "جاري فتح لوحة التحكم..." });
         router.push('/admin');
@@ -54,12 +50,9 @@ export default function LoginPage() {
       }
 
     } catch (error: any) {
-      // التعامل مع أخطاء فايربيز بدون إظهار شاشة الـ Crash
-      let errorMessage = "بيانات الدخول غير صحيحة، يرجى التأكد والمحاولة مرة أخرى.";
+      let errorMessage = "البريد الإلكتروني أو كلمة المرور غير صحيحة. تأكد من صحة البيانات.";
       
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        errorMessage = "البريد الإلكتروني أو كلمة المرور غير صحيحة. تأكد من صحة البيانات.";
-      } else if (error.code === 'auth/too-many-requests') {
+      if (error.code === 'auth/too-many-requests') {
         errorMessage = "تم حظر الدخول مؤقتاً بسبب محاولات كثيرة خاطئة. حاول لاحقاً.";
       }
 
@@ -126,12 +119,6 @@ export default function LoginPage() {
         </form>
 
         <div className="relative space-y-4 pt-4 border-t">
-          <Alert className="bg-primary/5 border-primary/20">
-            <Info className="h-4 w-4 text-primary" />
-            <AlertDescription className="text-[10px] text-muted-foreground mr-6">
-              ملاحظة: تأكد من تفعيل "Email/Password" في لوحة تحكم Firebase لكي يعمل الدخول.
-            </AlertDescription>
-          </Alert>
           <p className="text-center text-sm text-muted-foreground">
             ليس لديك حساب؟{' '}
             <Link href="/register" className="text-primary font-bold hover:underline">
