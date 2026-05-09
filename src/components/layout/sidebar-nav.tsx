@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,7 +19,8 @@ import {
   Trash2,
   BarChart3,
   ShieldAlert,
-  MessageCircle
+  MessageCircle,
+  Trophy
 } from 'lucide-react';
 import { useAuth, initiateSignOut, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -70,6 +70,7 @@ export function SidebarNav({ isAdmin = false }: SidebarNavProps) {
     { label: 'لوحة التحكم', icon: <PieChart className="w-5 h-5" />, href: '/admin' },
     { label: 'إدارة الكورسات', icon: <Video className="w-5 h-5" />, href: '/admin/courses' },
     { label: 'أكواد التفعيل', icon: <Ticket className="w-5 h-5" />, href: '/admin/codes' },
+    { label: 'نقاط التفوق', icon: <Trophy className="w-5 h-5" />, href: '/admin/points' },
     { label: 'مركز الواتساب', icon: <MessageCircle className="w-5 h-5" />, href: '/admin/whatsapp' },
     { label: 'إحصائيات الطلاب', icon: <BarChart3 className="w-5 h-5" />, href: '/admin/insights' },
     { label: 'الطلاب والرقابة', icon: <Users className="w-5 h-5" />, href: '/admin/students' },
