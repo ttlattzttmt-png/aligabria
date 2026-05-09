@@ -6,7 +6,7 @@ import { Navbar } from '@/components/ui/navbar';
 import { Footer } from '@/components/ui/footer';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, setDoc, serverTimestamp, getDocs, updateDoc, where } from 'firebase/firestore';
-import { Loader2, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, CheckCircle, Clock, Layout } from 'lucide-react';
 import { useState, useEffect, forwardRef, type ReactNode, isValidElement, type CSSProperties, type ComponentProps, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button as ShadButton } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { 
   MediaPlayer as Container, 
   MediaProvider as Video,
-  MediaPoster as Poster, 
+  Poster, 
   useMediaPlayer as usePlayer, 
   CaptionButton as CaptionsButton, 
   Controls, 
