@@ -29,7 +29,6 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useToast } from '@/hooks/use-toast';
 
-// استيراد المشغل بشكل ديناميكي
 const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
 
 export default function CourseViewer() {
@@ -42,7 +41,6 @@ export default function CourseViewer() {
   const [isCompleting, setIsCompleting] = useState(false);
   const [watermarkPos, setWatermarkPos] = useState({ top: '20%', left: '20%' });
 
-  // حالات المشغل المخصص
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,27 +53,49 @@ export default function CourseViewer() {
   const [seeking, setSeeking] = useState(false);
   const [showControls, setShowControls] = useState(true);
 
-  // جلب بروفايل الطالب
   const studentRef = useMemoFirebase(() => (firestore && user) ? doc(firestore, 'students', user.uid) : null, [firestore, user]);
   const { data: studentProfile } = useDoc(studentRef);
 
-  // جلب بيانات الكورس
   const courseRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'courses', id as string) : null, [firestore, id]);
   const { data: course, isLoading: isCourseLoading } = useDoc(courseRef);
 
-  // جلب الاشتراك
   const enrollmentRef = useMemoFirebase(() => (firestore && user && id) ? doc(firestore, 'students', user.uid, 'enrollments', id as string) : null, [firestore, user, id]);
   const { data: enrollment, isLoading: isEnrollmentLoading } = useDoc(enrollmentRef);
   
-  // جلب محتوى الكورس
   const contentRef = useMemoFirebase(() => (firestore && id) ? query(collection(firestore, 'courses', id as string, 'content'), orderBy('orderIndex', 'asc')) : null, [firestore, id]);
   const { data: contents, isLoading: isContentLoading } = useCollection(contentRef);
 
   const visibleContents = useMemo(() => contents?.filter(c => c.isVisible !== false) || [], [contents]);
 
-  // جلب سجل تقدم الطالب
   const videoProgressRef = useMemoFirebase(() => (firestore && user) ? collection(firestore, 'students', user.uid, 'video_progress') : null, [firestore, user]);
   const { data: completedVideos } = useCollection(videoProgressRef);
+
+  const attemptsRef = useMemoFirebase(() => (firestore && user) ? collection(firestore, 'students', user.uid, 'quiz_attempts') : null, [firestore, user]);
+  const { data: quizAttempts } = useCollection(attemptsRef);
+
+  // نظام التزامن الحي للإنجاز
+  useEffect(() => {
+    const syncProgress = async () => {
+      if (!firestore || !user || !id || !enrollment || visibleContents.length === 0 || isContentLoading) return;
+      
+      const doneVideoIds = new Set(completedVideos?.filter(v => v.courseId === id).map(v => v.contentId) || []);
+      const doneExamIds = new Set(quizAttempts?.filter(a => a.courseId === id).map(a => a.courseContentId) || []);
+      
+      const totalCompleted = visibleContents.filter(item => doneVideoIds.has(item.id) || doneExamIds.has(item.id)).length;
+      const totalItems = visibleContents.length;
+      
+      const actualProgress = Math.round((totalCompleted / totalItems) * 100);
+      
+      // لا نحدث السيرفر إلا إذا تغيرت النسبة فعلياً (تجنباً للحلقات اللانهائية)
+      if (enrollment.progressPercentage !== actualProgress) {
+        await updateDoc(doc(firestore, 'students', user.uid, 'enrollments', id as string), {
+          progressPercentage: actualProgress,
+          lastSync: new Date().toISOString()
+        });
+      }
+    };
+    syncProgress();
+  }, [visibleContents, completedVideos, quizAttempts, enrollment, firestore, user, id, isContentLoading]);
 
   useEffect(() => { 
     if (visibleContents.length > 0 && !activeContent) {
@@ -83,7 +103,6 @@ export default function CourseViewer() {
     }
   }, [visibleContents, activeContent]);
 
-  // تحديث العلامة المائية
   useEffect(() => {
     const interval = setInterval(() => {
       setWatermarkPos({
@@ -94,22 +113,15 @@ export default function CourseViewer() {
     return () => clearInterval(interval);
   }, []);
 
-  // وظيفة إخفاء أدوات التحكم تلقائياً
   const startControlsTimer = () => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     setShowControls(true);
-    
     if (playing) {
-      controlsTimerRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 5000);
+      controlsTimerRef.current = setTimeout(() => setShowControls(false), 5000);
     }
   };
 
-  const handleMouseMove = () => {
-    startControlsTimer();
-  };
-
+  const handleMouseMove = () => startControlsTimer();
   const handlePlayPause = () => {
     const nextState = !playing;
     setPlaying(nextState);
@@ -117,16 +129,8 @@ export default function CourseViewer() {
     else setShowControls(true);
   };
   
-  const handleProgress = (state: any) => {
-    if (!seeking) {
-      setPlayed(state.played);
-    }
-  };
-
-  const handleSeekChange = (value: number[]) => {
-    setPlayed(value[0]);
-  };
-
+  const handleProgress = (state: any) => { if (!seeking) setPlayed(state.played); };
+  const handleSeekChange = (value: number[]) => setPlayed(value[0]);
   const handleSeekMouseUp = (value: number[]) => {
     setSeeking(false);
     playerRef.current?.seekTo(value[0]);
@@ -135,9 +139,7 @@ export default function CourseViewer() {
   const toggleFullScreen = () => {
     if (!playerContainerRef.current) return;
     if (!document.fullscreenElement) {
-      playerContainerRef.current.requestFullscreen().catch(err => {
-        console.error(`Error entering fullscreen: ${err.message}`);
-      });
+      playerContainerRef.current.requestFullscreen().catch(console.error);
     } else {
       document.exitFullscreen();
     }
@@ -171,22 +173,10 @@ export default function CourseViewer() {
           points: increment(10)
         });
 
-        if (enrollment) {
-          const totalItems = visibleContents.length || 1;
-          const newlyCompletedCount = (completedVideos?.length || 0) + 1;
-          const newProgress = Math.min(100, Math.round((newlyCompletedCount / totalItems) * 100));
-          
-          await updateDoc(doc(firestore, 'students', user.uid, 'enrollments', id as string), {
-            progressPercentage: newProgress,
-            lastActivity: new Date().toISOString()
-          });
-        }
-
         toast({ title: "عاش يا بطل! 🚀", description: "تم تسجيل إتمام المحاضرة وإضافة 10 نقاط لرصيدك." });
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "حدث خطأ" });
     } finally {
       setIsCompleting(false);
     }
@@ -218,7 +208,6 @@ export default function CourseViewer() {
       <Navbar />
       <main className="flex-grow pt-24 pb-20 container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
           <div className="lg:col-span-2 space-y-6">
             {activeContent?.contentType === 'Video' ? (
               <div className="space-y-6 animate-in fade-in duration-700">
@@ -243,7 +232,6 @@ export default function CourseViewer() {
                       onDuration={(d) => setDuration(d)}
                       config={{ youtube: { playerVars: { modestbranding: 1, rel: 0, controls: 0, disablekb: 1 } } }}
                    />
-
                    <div onClick={handlePlayPause} className={cn("absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer z-40 transition-opacity duration-500", (playing && !showControls) ? "opacity-0" : "opacity-100")}>
                       {!playing && (
                         <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl scale-100 hover:scale-110 transition-transform duration-300">
@@ -251,13 +239,11 @@ export default function CourseViewer() {
                         </div>
                       )}
                    </div>
-
                    <div className={cn("absolute pointer-events-none opacity-10 select-none z-30 transition-all duration-1000", !showControls && playing ? "opacity-5" : "opacity-10")} style={{ top: watermarkPos.top, left: watermarkPos.left }}>
                       <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20 rotate-[-15deg]">
                         <p className="text-xs md:text-sm font-black text-white" dir="ltr">{studentProfile?.studentPhoneNumber || 'AL-BASHMOHANDES'}</p>
                       </div>
                    </div>
-
                    <div className={cn("absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent flex flex-col justify-end p-4 md:p-6 z-50 transition-all duration-500", showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full")}>
                       <div className="space-y-4">
                         <div className="flex items-center gap-3 md:gap-4">
@@ -333,7 +319,10 @@ export default function CourseViewer() {
                 {visibleContents.length === 0 ? (
                   <p className="p-10 text-center text-muted-foreground italic font-bold opacity-50">لا توجد دروس حالياً.</p>
                 ) : visibleContents.map((item, idx) => {
-                  const isDone = completedVideos?.some(v => v.contentId === item.id);
+                  const isDone = item.contentType === 'Video' 
+                    ? completedVideos?.some(v => v.contentId === item.id)
+                    : quizAttempts?.some(a => a.courseContentId === item.id);
+                    
                   return (
                     <button key={item.id} onClick={() => { setActiveContent(item); setPlaying(false); setShowControls(true); }} className={cn("w-full p-4 md:p-6 text-right flex flex-row-reverse items-center gap-3 md:gap-4 transition-all border-b border-white/5", activeContent?.id === item.id ? "bg-primary/10 border-r-4 border-r-primary" : "hover:bg-white/5")}>
                       <div className={cn("w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 font-black text-xs md:text-sm", isDone ? "bg-accent text-white" : activeContent?.id === item.id ? "bg-primary text-primary-foreground shadow-lg" : "bg-secondary text-muted-foreground")}>
@@ -341,7 +330,7 @@ export default function CourseViewer() {
                       </div>
                       <div className="text-right min-w-0 flex-grow">
                         <p className={cn("font-bold truncate text-xs md:text-sm", activeContent?.id === item.id ? "text-primary" : "text-white/80")}>{item.title}</p>
-                        <p className="text-[9px] md:text-[10px] opacity-40 mt-1 font-bold">{item.contentType === 'Video' ? 'فيديو شرح' : 'اختبار'}</p>
+                        <p className="text-[9px] md:text-[10px] opacity-40 mt-1 font-bold">{item.contentType === 'Video' ? 'فيديو شرح' : 'اختبار تقييمي'}</p>
                       </div>
                       <ChevronLeft className={cn("w-4 h-4 opacity-0 transition-all", activeContent?.id === item.id ? "opacity-100 text-primary" : "")} />
                     </button>
