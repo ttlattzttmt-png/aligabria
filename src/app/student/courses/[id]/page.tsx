@@ -16,10 +16,9 @@ import {
   ChevronLeft, 
   Trophy, 
   CheckCircle2,
-  FastForward,
-  Rewind,
   Volume2,
-  Settings2
+  Settings2,
+  Maximize
 } from 'lucide-react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +52,7 @@ export default function CourseViewer() {
 
   // حالات المشغل المخصص
   const playerRef = useRef<any>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -118,6 +118,17 @@ export default function CourseViewer() {
 
   const handleDuration = (duration: number) => {
     setDuration(duration);
+  };
+
+  const toggleFullScreen = () => {
+    if (!playerContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      playerContainerRef.current.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -209,7 +220,7 @@ export default function CourseViewer() {
             {activeContent?.contentType === 'Video' ? (
               <div className="space-y-6 animate-in fade-in duration-700">
                 {/* مشغل الفيديو المخصص */}
-                <div className="relative aspect-video rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border border-white/10 group select-none">
+                <div ref={playerContainerRef} className="relative aspect-video rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border border-white/10 group select-none">
                    <ReactPlayer
                       ref={playerRef}
                       url={activeContent.youtubeLink}
@@ -289,6 +300,9 @@ export default function CourseViewer() {
                                   </SelectContent>
                                 </Select>
                               </div>
+                              <button onClick={toggleFullScreen} className="text-white/70 hover:text-white transition-colors">
+                                <Maximize className="w-6 h-6" />
+                              </button>
                            </div>
                         </div>
                       </div>
@@ -301,7 +315,7 @@ export default function CourseViewer() {
                     <div className="text-right flex-grow">
                       <h1 className="text-2xl md:text-3xl font-black text-primary mb-2">{activeContent.title}</h1>
                       <div className="flex items-center gap-3 justify-end opacity-70">
-                         <Badge className="bg-accent/10 text-accent text-[10px] font-black border-accent/20">مشغل البشمهندس v1 ✓</Badge>
+                         <Badge className="bg-accent/10 text-accent text-[10px] font-black border-accent/20">مشغل البشمهندس v1.1 ✓</Badge>
                          <p className="text-xs text-muted-foreground font-bold flex items-center gap-1">
                            <Clock className="w-3.5 h-3.5" /> مضافة في: {activeContent.createdAt?.seconds ? new Date(activeContent.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : 'اليوم'}
                          </p>
