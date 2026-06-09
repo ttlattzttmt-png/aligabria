@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Space Grotesk', 'sans-serif'],
+        body: ['"Readex Pro"', 'sans-serif'],
+        headline: ['"Readex Pro"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
