@@ -146,11 +146,16 @@ export default function CourseViewer() {
   };
 
   const formatTime = (seconds: number) => {
-    const date = new Date(seconds * 1000);
-    const mm = date.getUTCMinutes();
-    const ss = date.getUTCSeconds().toString().padStart(2, '0');
-    return `${mm}:${ss}`;
-  };
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  const date = new Date(seconds * 1000);
+  const hh = date.getUTCHours();
+  const mm = date.getUTCMinutes();
+  const ss = date.getUTCSeconds().toString().padStart(2, '0');
+  if (hh > 0) {
+    return `${hh}:${mm.toString().padStart(2, '0')}:${ss}`;
+  }
+  return `${mm}:${ss}`;
+};
 
   const handleMarkAsCompleted = async () => {
     if (!firestore || !user || !id || !activeContent || isCompleting) return;
