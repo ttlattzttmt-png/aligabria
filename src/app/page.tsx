@@ -177,7 +177,7 @@ export default function Home() {
         {/* Call to Action */}
         <section className="py-32">
           <div className="container mx-auto px-4">
-            <div className="bg-gradient-to-l from-primary to-yellow-600 rounded-[4rem] p-12 md:p-24 text-center text-primary-foreground relative overflow-hidden shadow-2xl">
+            <div className="bg-gradient-to-l from-primary to-pink-800 rounded-[4rem] p-12 md:p-24 text-center text-primary-foreground relative overflow-hidden shadow-2xl">
               <div className="relative z-10">
                 <h2 className="text-4xl md:text-7xl font-headline font-bold mb-10 leading-tight">جاهز تبدأ رحلة النجاح؟</h2>
                 <p className="text-xl md:text-2xl mb-16 opacity-90 max-w-3xl mx-auto font-medium leading-relaxed">

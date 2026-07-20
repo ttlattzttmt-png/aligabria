@@ -92,7 +92,7 @@ export function SidebarNav({ isAdmin = false }: SidebarNavProps) {
     <div className="flex flex-col h-full bg-card">
       <Link href={user ? (isAdmin ? '/admin' : '/student') : '/'} className="p-6 flex items-center gap-3 border-b hover:bg-secondary/20 transition-colors">
         <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl shadow-lg shadow-primary/20">ب</div>
-        <span className="text-xl font-headline font-bold">البشمهندس</span>
+        <span className="text-xl font-headline font-bold">الدكتور</span>
       </Link>
 
       <nav className="flex-grow p-4 space-y-2 overflow-y-auto">

@@ -2,8 +2,8 @@
   "placeholderImages": [
     {
       "id": "hero-bg",
-      "description": "Educational Math background",
-      "imageUrl": "https://picsum.photos/seed/math-edu/1920/1080",
+      "description": "Educational Chemistry background",
+      "imageUrl": "https://picsum.photos/seed/chemistry-edu/1920/1080",
       "imageHint": "mathematics blackboard"
     },
     {
