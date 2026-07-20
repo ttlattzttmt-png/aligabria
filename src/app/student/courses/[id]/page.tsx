@@ -123,11 +123,13 @@ export default function CourseViewer() {
 
   const handleMouseMove = () => startControlsTimer();
   const handleTouchStart = () => {
-  if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
-  setShowControls(true);
-};
-const handleTouchEnd = () => {
-  startControlsTimer();
+  if (!showControls) {
+    startControlsTimer();
+  } else if (playing) {
+    setShowControls(false);
+  } else {
+    startControlsTimer();
+  }
 };
   const handlePlayPause = () => {
     const nextState = !playing;
@@ -228,7 +230,6 @@ const handleTouchEnd = () => {
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => playing && setShowControls(false)}
                   onTouchStart={handleTouchStart}
-                  onTouchEnd={handleTouchEnd}
                   className={cn(
                     "relative aspect-video rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border border-white/10 group select-none flex flex-col transition-all",
                     !showControls && playing ? "cursor-none" : "cursor-default"
@@ -312,7 +313,7 @@ const handleTouchEnd = () => {
                   <Trophy className="w-12 h-12 md:w-20 md:h-20 text-primary mx-auto animate-bounce" />
                   <div className="space-y-2 md:space-y-4">
                     <h2 className="text-xl md:text-4xl font-black leading-tight">{activeContent.title}</h2>
-                    <p className="text-muted-foreground font-bold text-sm md:text-lg italic">دكتور، هذا الجزء عبارة عن اختبار تقييمي.</p>
+                    <p className="text-muted-foreground font-bold text-sm md:text-lg italic">بشمهندس، هذا الجزء عبارة عن اختبار تقييمي.</p>
                   </div>
                   <Link href={`/student/exams/${activeContent.id}`} className="block">
                     <Button size="lg" className="w-full md:w-auto h-14 md:h-16 px-8 md:px-12 bg-primary text-primary-foreground font-black rounded-xl md:rounded-2xl text-lg md:text-xl shadow-xl shadow-primary/20 active:scale-95 transition-transform">
