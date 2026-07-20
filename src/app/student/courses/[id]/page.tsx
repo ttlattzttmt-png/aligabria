@@ -247,7 +247,7 @@ export default function CourseViewer() {
                       onDuration={(d) => setDuration(d)}
                       config={{ youtube: { playerVars: { modestbranding: 1, rel: 0, controls: 0, disablekb: 1 } } }}
                    />
-                   <div onClick={handlePlayPause} className={cn("absolute inset-0 flex items-center justify-center bg-black/20 z-40 transition-opacity duration-500", (playing && !showControls) ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto cursor-pointer")}>
+                   <div onClick={handlePlayPause} className={cn("absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer z-40 transition-opacity duration-500", (playing && !showControls) ? "opacity-0" : "opacity-100")}>
                       {!playing && (
                         <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl scale-100 hover:scale-110 transition-transform duration-300">
                           <Play className="w-8 h-8 md:w-10 md:h-10 fill-current ml-1" />
