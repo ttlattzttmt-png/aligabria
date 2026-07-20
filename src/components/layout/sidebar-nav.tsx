@@ -145,7 +145,7 @@ export function SidebarNav({ isAdmin = false }: SidebarNavProps) {
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b z-50 px-4 flex items-center justify-between">
         <Link href={user ? (isAdmin ? '/admin' : '/student') : '/'} className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">ب</div>
-          <span className="text-lg font-headline font-bold">البشمهندس</span>
+          <span className="text-lg font-headline font-bold">الدكتور</span>
         </Link>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>

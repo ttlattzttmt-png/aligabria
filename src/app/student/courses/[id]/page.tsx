@@ -298,7 +298,7 @@ export default function CourseViewer() {
                   <Trophy className="w-12 h-12 md:w-20 md:h-20 text-primary mx-auto animate-bounce" />
                   <div className="space-y-2 md:space-y-4">
                     <h2 className="text-xl md:text-4xl font-black leading-tight">{activeContent.title}</h2>
-                    <p className="text-muted-foreground font-bold text-sm md:text-lg italic">بشمهندس، هذا الجزء عبارة عن اختبار تقييمي.</p>
+                    <p className="text-muted-foreground font-bold text-sm md:text-lg italic">دكتور، هذا الجزء عبارة عن اختبار تقييمي.</p>
                   </div>
                   <Link href={`/student/exams/${activeContent.id}`} className="block">
                     <Button size="lg" className="w-full md:w-auto h-14 md:h-16 px-8 md:px-12 bg-primary text-primary-foreground font-black rounded-xl md:rounded-2xl text-lg md:text-xl shadow-xl shadow-primary/20 active:scale-95 transition-transform">

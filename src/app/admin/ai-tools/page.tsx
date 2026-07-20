@@ -78,7 +78,7 @@ export default function AITools() {
           <BrainCircuit className="w-10 h-10" />
         </div>
         <div>
-          <h1 className="text-4xl font-headline font-bold">مساعد البشمهندس الذكي</h1>
+          <h1 className="text-4xl font-headline font-bold">مساعد الدكتور الذكي</h1>
           <p className="text-muted-foreground">استخدم الذكاء الاصطناعي لتسهيل مهامك اليومية كمعلم.</p>
         </div>
       </div>

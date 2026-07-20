@@ -185,7 +185,7 @@ export default function AdminGradingPage() {
              </div>
              <Progress value={(broadcastProgress.current/broadcastProgress.total)*100} className="h-3 bg-secondary" />
              <p className="text-xs text-muted-foreground flex items-center gap-2 justify-center">
-                <Clock className="w-4 h-4 animate-spin" /> حماية البشمهندس نشطة.. ننتظر قليلاً بين كل رسالة لضمان الأمان.
+                <Clock className="w-4 h-4 animate-spin" /> حماية الدكتور نشطة.. ننتظر قليلاً بين كل رسالة لضمان الأمان.
              </p>
           </div>
         </Card>
@@ -257,7 +257,7 @@ export default function AdminGradingPage() {
               <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <ClipboardList className="w-12 h-12 text-primary" />
               </div>
-              <p className="font-black text-2xl text-primary">بشمهندس، اختر محاولة طالب للتقييم</p>
+              <p className="font-black text-2xl text-primary">، اختر محاولة طالب للتقييم</p>
               <p className="text-sm mt-2">سيظهر هنا نص الأسئلة، الصور، وإجابات الطالب.</p>
             </Card>
           )}

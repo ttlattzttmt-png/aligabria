@@ -54,7 +54,7 @@ export default function StudentDashboard() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-20 text-right">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-headline font-bold mb-2">أهلاً بك، يا بشمهندس {firstName}</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-bold mb-2">أهلاً بك، يا دكتور {firstName}</h1>
           <p className="text-muted-foreground">كل دروسك وامتحاناتك هنا، جاهز للتفوق؟</p>
         </div>
         <div className="flex flex-row-reverse items-center gap-3 bg-card p-4 rounded-2xl border border-primary/20 shadow-lg">

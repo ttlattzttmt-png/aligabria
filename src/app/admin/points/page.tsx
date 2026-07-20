@@ -158,7 +158,7 @@ export default function AdminPointsPage() {
               {!selectedCourseId ? (
                 <div className="p-40 text-center text-muted-foreground italic flex flex-col items-center gap-4">
                   <TrendingUp className="w-20 h-20 opacity-5" />
-                  <p className="text-xl font-bold">بشمهندس، يرجى اختيار كورس أولاً لعرض طلابه.</p>
+                  <p className="text-xl font-bold">دكتور، يرجى اختيار كورس أولاً لعرض طلابه.</p>
                 </div>
               ) : isStudentsLoading || isEnLoading ? (
                 <div className="p-40 text-center"><Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" /></div>

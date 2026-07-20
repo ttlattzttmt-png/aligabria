@@ -4,13 +4,13 @@ import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'منصة البشمهندس التعليمية',
-  description: 'المنصة التعليمية الأولى لطلاب الهندسة والمرحلة الثانوية',
+  title: 'منصة الدكتور التعليمية',
+  description: 'المنصة التعليمية الأولى لطلاب المرحلة الثانوية',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'البشمهندس',
+    title: 'الدكتور',
   },
   formatDetection: {
     telephone: false,

@@ -7,7 +7,7 @@ import { ShieldCheck, Target, Award, Users, BookOpen, Heart } from 'lucide-react
 
 export default function AboutPage() {
   const values = [
-    { icon: <Target className="w-8 h-8 text-primary" />, title: 'رؤيتنا', desc: 'أن نكون المنصة التعليمية الرائدة في تبسيط العلوم الهندسية والفيزيائية لطلاب الوطن العربي.' },
+    { icon: <Target className="w-8 h-8 text-primary" />, title: 'رؤيتنا', desc: 'أن نكون المنصة التعليمية الرائدة في تبسيط العلوم الكيميائية لطلاب الوطن العربي.' },
     { icon: <Award className="w-8 h-8 text-primary" />, title: 'رسالتنا', desc: 'تمكين الطلاب من فهم المواد العلمية بعمق من خلال شروحات مبتكرة واختبارات دقيقة.' },
     { icon: <Heart className="w-8 h-8 text-primary" />, title: 'قيمنا', desc: 'الأمانة العلمية، الابتكار في التعليم، ودعم الطالب في كل خطوة نحو النجاح.' },
   ];
@@ -23,9 +23,9 @@ export default function AboutPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 text-primary mb-4">
               <ShieldCheck className="w-12 h-12" />
             </div>
-            <h1 className="text-5xl font-headline font-bold">عن منصة البشمهندس</h1>
+            <h1 className="text-5xl font-headline font-bold">عن منصة الدكتور</h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              بدأت منصة البشمهندس كحلم لتبسيط العلوم الهندسية المعقدة، واليوم نحن فخورون بخدمة آلاف الطلاب في المرحلة الثانوية، مقدمين لهم أفضل الأدوات التعليمية والتقنية للوصول للقمة.
+              بدأت منصة الدكتور كحلم لتبسيط العلوم الكيميائية المعقدة، واليوم نحن فخورون بخدمة آلاف الطلاب في المرحلة الثانوية، مقدمين لهم أفضل الأدوات التعليمية والتقنية للوصول للقمة.
             </p>
           </div>
 

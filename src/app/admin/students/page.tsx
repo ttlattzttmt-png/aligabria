@@ -68,7 +68,7 @@ export default function AdminStudents() {
   }, [students, searchTerm]);
 
   const handleQuickMessage = async (phoneNumber: string, name: string) => {
-    const msg = `مرحباً يا بشمهندس ${name.split(' ')[0]}.. كيف يمكننا مساعدتك اليوم؟`;
+    const msg = `مرحباً يا دكتور ${name.split(' ')[0]}.. كيف يمكننا مساعدتك اليوم؟`;
     await sendAutomatedMessage(phoneNumber, msg, whatsappConfig as any);
   };
 

@@ -6,21 +6,21 @@
 
 export const BrandConfig = {
   // المعلومات الأساسية للمنصة
-  name: "منصة البشمهندس",
-  shortName: "البشمهندس",
-  description: "المنصة التعليمية الأولى لطلاب الهندسة والمرحلة الثانوية",
+  name: "منصة الدكتور",
+  shortName: "الدكتور",
+  description: "المنصة التعليمية الأولى لطلاب المرحلة الثانوية",
   
   // بيانات التواصل (تظهر في كل مكان)
-  supportPhone: "01008006562",
-  supportEmail: "support@al-bashmohandes.com",
-  whatsappNumber: "201008006562",
+  supportPhone: "01066272261",
+  supportEmail: "support@al-doctor.com",
+  whatsappNumber: "201066272261",
   
   // الإدارة والأمان (البريد الذي سيصبح هو الأدمن الوحيد)
-  adminEmail: "admin@al-bashmohandes.com",
+  adminEmail: "admin@al-doctor.com",
   
   // توقيع المطور (يظهر في الأسفل)
   developerName: "Mohamed Alaa",
-  developerContact: "01008006562",
+  developerContact: "01066272261",
   
   // الروابط الاجتماعية
   social: {

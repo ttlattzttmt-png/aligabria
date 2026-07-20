@@ -53,7 +53,7 @@ export default function AdminOverview() {
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl md:text-4xl font-headline font-bold">لوحة تحكم البشمهندس</h1>
+        <h1 className="text-3xl md:text-4xl font-headline font-bold">لوحة تحكم الدكتور</h1>
         <div className="bg-primary/10 text-primary px-4 md:px-6 py-2 rounded-2xl text-sm font-bold border border-primary/20 flex items-center gap-2 self-start md:self-auto">
           <Clock className="w-4 h-4" />
           {currentTime || '...'}

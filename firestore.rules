@@ -8,7 +8,7 @@ service cloud.firestore {
 
     function isOwnerAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == "admin@al-bashmohandes.com" ||
+        request.auth.token.email == "admin@al-doctor.com" ||
         exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid))
       );
     }

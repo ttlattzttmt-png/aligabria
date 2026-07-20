@@ -25,7 +25,7 @@ export default function StudentExamsPage() {
     <div className="space-y-8 animate-in fade-in duration-500 text-right">
       <div>
         <h1 className="text-4xl font-headline font-bold mb-2">سجل درجاتي</h1>
-        <p className="text-muted-foreground font-bold italic">تظهر النتائج فوراً إذا سمح البشمهندس بذلك، أو بعد التصحيح اليدوي.</p>
+        <p className="text-muted-foreground font-bold italic">تظهر النتائج فوراً إذا سمح الدكتور بذلك، أو بعد التصحيح اليدوي.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

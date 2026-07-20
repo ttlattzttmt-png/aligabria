@@ -215,7 +215,7 @@ export default function AdminExams() {
              </div>
              <Progress value={(broadcastProgress.current/broadcastProgress.total)*100} className="h-3 bg-secondary" />
              <p className="text-xs text-muted-foreground flex items-center gap-2 justify-center">
-                <Clock className="w-4 h-4 animate-spin" /> نظام حماية البشمهندس نشط.. ننتظر 5 ثوانٍ لضمان وصول الرسالة بأمان.
+                <Clock className="w-4 h-4 animate-spin" /> نظام حماية الدكتور نشط.. ننتظر 5 ثوانٍ لضمان وصول الرسالة بأمان.
              </p>
           </div>
         </Card>
@@ -335,7 +335,7 @@ function AnswerKeyPDFExport({ exam }: { exam: any }) {
             </style>
           </head>
           <body>
-            <div class="header"><h1>نموذج إجابة: ${exam.title}</h1><p>منصة البشمهندس التعليمية</p></div>
+            <div class="header"><h1>نموذج إجابة: ${exam.title}</h1><p>منصة الدكتور التعليمية</p></div>
             ${questionsData.map((q, i) => `
               <div class="question-box">
                 <h3 style="margin-top:0">س ${i+1}: ${q.questionText}</h3>
@@ -343,7 +343,7 @@ function AnswerKeyPDFExport({ exam }: { exam: any }) {
                 <div class="answer">الإجابة الصحيحة: ${q.correctText}</div>
               </div>
             `).join('')}
-            <div class="footer">صنع بكل فخر بواسطة : Mohamed Alaa - 01008006562</div>
+            <div class="footer">صنع بكل فخر بواسطة : Mohamed Alaa - 01066272261</div>
           </body>
         </html>
       `);

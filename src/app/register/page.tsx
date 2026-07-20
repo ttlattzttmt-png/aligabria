@@ -53,7 +53,7 @@ export default function RegisterPage() {
 
       toast({
         title: "تم التسجيل بنجاح",
-        description: "أهلاً بك في عائلة البشمهندس."
+        description: "أهلاً بك في عائلة الدكتور."
       });
       
       // التوجيه للوحة التحكم
@@ -80,11 +80,11 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-primary/5 blur-3xl" />
         <div className="max-w-md space-y-8 animate-in fade-in slide-in-from-right duration-700 relative z-10">
           <div className="flex items-center gap-3 justify-end">
-            <span className="text-4xl font-headline font-bold text-primary">البشمهندس</span>
+            <span className="text-4xl font-headline font-bold text-primary">الدكتور</span>
             <ShieldCheck className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-5xl font-headline font-bold leading-tight">انضم إلى مجتمع المتميزين</h1>
-          <p className="text-xl text-muted-foreground">سجل الآن للحصول على وصول كامل لكورسات الفيزياء والرياضيات بأحدث الطرق التعليمية.</p>
+          <p className="text-xl text-muted-foreground">سجل الآن للحصول على وصول كامل لكورسات الكيمياء بأحدث الطرق التعليمية.</p>
         </div>
       </div>
 

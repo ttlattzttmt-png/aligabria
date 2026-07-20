@@ -50,7 +50,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-bold mb-1">رقم الهاتف / واتساب</p>
-                      <p className="text-xl font-bold" dir="ltr">01008006562</p>
+                      <p className="text-xl font-bold" dir="ltr">01066272261</p>
                     </div>
                   </div>
 
@@ -60,7 +60,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-bold mb-1">البريد الإلكتروني</p>
-                      <p className="text-lg font-bold">support@al-bashmohandes.com</p>
+                      <p className="text-lg font-bold">support@al-doctor.com</p>
                     </div>
                   </div>
 
@@ -70,7 +70,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-bold mb-1">العنوان</p>
-                      <p className="text-lg font-bold">المنصة أونلاين - القاهرة، مصر</p>
+                      <p className="text-lg font-bold">المنصة أونلاين - الغربية، مصر</p>
                     </div>
                   </div>
                 </CardContent>

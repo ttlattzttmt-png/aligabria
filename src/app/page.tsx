@@ -52,7 +52,7 @@ export default function Home() {
                 مرحباً بك في مستقبل التعليم الذكي
               </span>
               <h1 className="text-4xl md:text-7xl font-headline font-bold mb-8 leading-[1.2] md:leading-[1.1]">
-                تعلم الهندسة مع <span className="text-primary italic">البشمهندس</span>
+                تعلم الكيمياء مع <span className="text-primary italic">الدكتور</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-12 leading-relaxed max-w-2xl">
                 المنصة المتكاملة لطلاب المرحلة الثانوية. شروحات مبسطة، امتحانات تفاعلية، ومتابعة دقيقة لمستواك الدراسي للوصول للقمة.
@@ -156,7 +156,7 @@ export default function Home() {
         {/* Why Us Section */}
         <section className="py-32 bg-card/50 border-y border-primary/5">
           <div className="container mx-auto px-4 text-center mb-24">
-            <h2 className="text-3xl md:text-5xl font-headline font-bold mb-6">لماذا تختار منصة البشمهندس؟</h2>
+            <h2 className="text-3xl md:text-5xl font-headline font-bold mb-6">لماذا تختار منصة الدكتور؟</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">نحن لسنا مجرد منصة فيديوهات، بل رفيقك في رحلة النجاح بخطوات مدروسة وعلمية.</p>
           </div>
           <div className="container mx-auto px-4">
@@ -181,7 +181,7 @@ export default function Home() {
               <div className="relative z-10">
                 <h2 className="text-4xl md:text-7xl font-headline font-bold mb-10 leading-tight">جاهز تبدأ رحلة النجاح؟</h2>
                 <p className="text-xl md:text-2xl mb-16 opacity-90 max-w-3xl mx-auto font-medium leading-relaxed">
-                  انضم لآلاف الطلاب الذين بدأوا بالفعل في تحقيق أحلامهم مع البشمهندس. مستقبلك يبدأ من هنا.
+                  انضم لآلاف الطلاب الذين بدأوا بالفعل في تحقيق أحلامهم مع الدكتور. مستقبلك يبدأ من هنا.
                 </p>
                 <div className="flex flex-wrap justify-center gap-8">
                   <Link href="/register">

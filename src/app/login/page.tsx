@@ -32,7 +32,7 @@ export default function LoginPage() {
 
       // التوجيه بناءً على الإيميل المسجل في الإعدادات المركزية
       if (userEmail === BrandConfig.adminEmail.toLowerCase()) {
-        toast({ title: "مرحباً بك يا بشمهندس", description: "جاري فتح لوحة التحكم..." });
+        toast({ title: "مرحباً بك يا دكتور", description: "جاري فتح لوحة التحكم..." });
         router.push('/admin');
       } else {
         toast({ title: "تم الدخول بنجاح", description: "مرحباً بك في منصتك التعليمية." });

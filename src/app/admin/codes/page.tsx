@@ -108,7 +108,7 @@ export default function ManageCodes() {
         <body>
           <div class="header">
             <h1>أكواد تفعيل كورس: ${courseTitle}</h1>
-            <p>منصة البشمهندس التعليمية - العدد الإجمالي: ${courseCodes.length} كود</p>
+            <p>منصة الدكتور التعليمية - العدد الإجمالي: ${courseCodes.length} كود</p>
           </div>
           <div class="grid">
             ${courseCodes.map(c => `
@@ -119,7 +119,7 @@ export default function ManageCodes() {
             `).join('')}
           </div>
           <div class="footer">
-            صنع بكل فخر بواسطة : Mohamed Alaa - تواصل فني: 01008006562
+            صنع بكل فخر بواسطة : Mohamed Alaa - تواصل فني: 01066272261
           </div>
           <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
         </body>

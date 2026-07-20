@@ -347,7 +347,7 @@ export default function WhatsAppDashboard() {
                  <div className="space-y-4">
                     <Label className="font-black text-lg mr-2 block">رقم الواتساب الرسمي</Label>
                     <Input 
-                      placeholder="مثال: 01008006562" 
+                      placeholder="مثال: 01066272261" 
                       className="h-16 text-center text-2xl font-black rounded-2xl bg-secondary/30 border-primary/5 focus:border-primary"
                       value={gatewayConfig.senderNumber}
                       onChange={(e) => setGatewayConfig({...gatewayConfig, senderNumber: e.target.value})}
