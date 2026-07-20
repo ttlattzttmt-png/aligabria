@@ -123,13 +123,11 @@ export default function CourseViewer() {
 
   const handleMouseMove = () => startControlsTimer();
   const handleTouchStart = () => {
-  if (!showControls) {
-    startControlsTimer();
-  } else if (playing) {
-    setShowControls(false);
-  } else {
-    startControlsTimer();
-  }
+  if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+  setShowControls(true);
+};
+const handleTouchEnd = () => {
+  startControlsTimer();
 };
   const handlePlayPause = () => {
     const nextState = !playing;
@@ -230,6 +228,7 @@ export default function CourseViewer() {
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => playing && setShowControls(false)}
                   onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
                   className={cn(
                     "relative aspect-video rounded-2xl md:rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border border-white/10 group select-none flex flex-col transition-all",
                     !showControls && playing ? "cursor-none" : "cursor-default"
